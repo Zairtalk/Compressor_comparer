@@ -4,6 +4,7 @@ import os
 import prettytable as pt
 import time
 import shutil as sh
+from stat import S_ISDIR
 
 folders = os.listdir('Dane_do')
 
@@ -91,11 +92,21 @@ def getPathName(directory=os.getcwd()):
         os.chdir(curpath)
     return listoffiles
 
-def getFileSize(file):
-    return os.stat(file).st_size
+def getSize(path):
+    if not S_ISDIR(os.stat(path).st_mode):
+        return os.stat(path).st_size
+    else:
+        size = 0
+        for i,ele in enumerate(os.walk(path)):
+            if i == 0:
+                continue
+            for j in ele[2]:
+                file = ele[0] + '/' + j
+                size += os.stat(file).st_size
+        return size
 
 def showFileSize(file): # Convert size to human readable
-    fsize = getFileSize(file)
+    fsize = getSize(file)
     if fsize > (1024 * 1024 * 1024):
         return f'{fsize/(1024**3):.4f} Gb'
     elif fsize > (1024 * 1024):
@@ -116,7 +127,10 @@ def makeTables():
     #TODO make pretty table for every compressor
 
 def main():
-    archivization(dict_of_commands)
+    # archivization(dict_of_commands)
+    print(showFileSize('Dane_do'))
+    print(showFileSize('Dane_do/pdf/byte-of-python.pdf'))
+    # change_in_size()
     # print(getPathName('Dane_do/pdf'))
     #TODO make proper main()
 
