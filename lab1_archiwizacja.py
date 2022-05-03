@@ -96,8 +96,8 @@ def makeTables():
     #TODO make pretty table for every compressor
 
 def main():
-    #archivization(dict_of_commands)
-    print(getPathName('/lost+found/'))
+    # archivization(dict_of_commands)
+    # print(getPathName('/home/zairtalk/Education/Python/Compressor_compare/Dane_do/'))
     #TODO make proper main()
 
 if __name__ == '__main__':
