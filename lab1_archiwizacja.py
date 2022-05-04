@@ -164,6 +164,8 @@ def makeTables():
 
 def main():
     archivization(dict_of_commands)
+    with open('data.json','w') as f:
+        json.dump(information,f)
     makeTables()
 
 if __name__ == '__main__':
