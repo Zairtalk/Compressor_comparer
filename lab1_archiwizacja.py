@@ -164,7 +164,6 @@ def makeTables():
 
 def main():
     archivization(dict_of_commands)
-    pprint(information)
     makeTables()
 
 if __name__ == '__main__':
