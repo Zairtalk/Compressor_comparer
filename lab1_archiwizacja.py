@@ -40,10 +40,17 @@ def timer(func): #Decorator funciton to calculate time it takes to execute anoth
 def to_archive(command): #function that redirects commands to linux shell
     os.system(command)
 
+def progress_bar(progress,total):
+    percent = 100 * (progress / float(total))
+    bar = '⬜' * int(percent) + '-' * (100-int(percent))
+    print(f'\r|{bar}| {percent:.2f}%', end="\r")
 
 def archivization(dicto,folds=folders): #main component of program, where everything is distributed
     created = False
     curdir = os.getcwd()
+    total = (len(folds) * len(dicto.keys()))
+    prog = 0
+    progress_bar(prog,total)
     for folder in folds:
         for compressor, command in dicto.items():
             sourcefolder = 'Dane_do/' + folder
@@ -67,6 +74,8 @@ def archivization(dicto,folds=folders): #main component of program, where everyt
                 saveData(compr=compressor[:index-2],filetype=folder,time=round(timers,4),\
                          size=showSize(folder + '.tar' + compressor[index:-1]),\
                         difference=changeInSize('../' + sourcefolder,folder + '.tar' + compressor[index:-1]))
+            prog += 1
+            progress_bar(prog,total)
         created = False
         os.chdir(curdir)
     else:
@@ -164,8 +173,8 @@ def makeTables():
 
 def main():
     archivization(dict_of_commands)
-    with open('data.json','w') as f:
-        json.dump(information,f)
+    # with open('data.json','w') as f:
+    #     json.dump(information,f)
     makeTables()
 
 if __name__ == '__main__':
