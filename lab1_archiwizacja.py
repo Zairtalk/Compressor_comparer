@@ -5,25 +5,30 @@ import prettytable as pt
 import time
 import shutil as sh
 from stat import S_ISDIR
+from pprint import pprint
+
+
+information = {'Time spent':{},'Output size':{},'Size difference':{}}
+dict_of_difference = {}
+dict_of_sizes = {}
+dict_of_time = {}
 
 folders = os.listdir('Dane_do')
 
-dict_of_commands = {'zip':'zip -rq {0}.zip {1}',
-                    'rar':'rar a {0}.rar {1} > /dev/null',
-                    '7zip':'7z a  {0}.7z {1} > /dev/null',
-                    'lzop':'lzop -q {1} -o {0}.lzo',
-                    'zstandart':'zstd -q {0}.tar',
-                    'lz4':'lz4 -qr {0}.tar',
-                    'lrzip zpaq':'lrzip -zq {0}.tar',
-                    'pigz':'pigz -kq {0}.tar',
-                    'bzip2':'bzip2 -kq {0}.tar',
-                    'lzma':'lzma -kq {0}.tar',
-                    'xz':'xz -kq {0}.tar',
-                    'pixz':'pixz -k {0}.tar'} #linux commands to compress files
+dict_of_commands = {'zip (.zip)':'zip -rq {0}.zip {1}',
+                    'rar (.rar)':'rar a {0}.rar {1} > /dev/null',
+                    '7zip (.7z)':'7z a  {0}.7z {1} > /dev/null',
+                    'zstandart (.zst)':'zstd -q {0}.tar',
+                    'lz4 (.lz4)':'lz4 -qr {0}.tar',
+                    'lrzip zpaq (.lrz)':'lrz -zk {0}.tar',
+                    'pigz (.gz)':'pigz -kq {0}.tar',
+                    'bzip2 (.bz2)':'bzip2 -kq {0}.tar',
+                    'lzma (.lzma)':'lzma -kq {0}.tar',
+                    'xz (.xz)':'xz -kq {0}.tar'}
 
-list_of_extensions = ['.zip','.rar','.7z','.lz4','.zst','.lzo','.tpxz','.lrz','.gz','.bz2','.lzma','.xz']
+list_of_extensions = ['.zip','.rar','.7z','.lz4','.zst','.lrz','.gz','.bz2','.lzma','.xz']
 
-'''file compressors: zip, rar, 7zip, lz4, zstandart, lzop, pigz, pixz, bzip2, lzma, lrzip, xz'''
+'''file compressors: zip, rar, 7zip, lz4, zstandart, pigz, bzip2, lzma, lrzip, xz'''
 
 timer = None
 def timer(func): #Decorator funciton to calculate time it takes to execute another function
@@ -48,24 +53,46 @@ def archivization(dicto,folds=('pdf','doc')): #main component of program, where 
         for compressor, command in dicto.items():
             sourcefolder = 'Dane_do/' + folder
             endfile = 'Dane_po/'
-            if compressor not in ('lz4','pixz','zstandart','lrzip zpaq','pigz','bzip2','lzma','xz'):
+            if compressor not in ('lz4 (.lz4)','pixz (.pixz)','zstandart (.zst)','lrzip zpaq (.lrz)',\
+                                  'pigz (.gz)','bzip2 (.bz2)','lzma (.lzma)','xz (.xz)'):
                 archive_command = command.format(endfile + folder,sourcefolder,folder)
+                to_archive(archive_command)
+                index = compressor.index('.')
+                saveData(compr=compressor[:index-2],filetype=folder,time=round(timer,4),\
+                         size=showSize(endfile + folder + compressor[index:-1]),\
+                        difference=changeInSize(sourcefolder,endfile + folder + compressor[index:-1]))
             else:
                 if not created:
                     created = True
                     os.system('tar -cf {1}.tar {0}/'.format(sourcefolder,endfile + folder))
                     os.chdir(endfile)
                 archive_command = command.format(folder)
-            to_archive(archive_command)
-            print(round(timer,))
+                to_archive(archive_command)
+                index = compressor.index('.')
+                saveData(compr=compressor[:index-2],filetype=folder,time=round(timer,4),\
+                         size=showSize(folder + '.tar' + compressor[index:-1]),\
+                        difference=changeInSize('../' + sourcefolder,folder + '.tar' + compressor[index:-1]))
+        created = False
+        os.chdir(curdir)
+    else:
+        os.chdir(endfile)
         os.system('rm *.tar')
         os.chdir(curdir)
-        created = False
-    else:
-        os.chdir(curdir)
 
-def saveData():
-    pass
+def saveData(compr,filetype,size=None,time=None,difference=None):
+    global information,dict_of_difference,dict_of_sizes,dict_of_time
+    if time:
+        dict_of_time[compr] = time
+        information['Time spent'][filetype] = dict_of_time
+        time = None
+    if size:
+        dict_of_sizes[compr] = size
+        information['Output size'][filetype] = dict_of_sizes
+        size = None
+    if difference:
+        dict_of_difference[compr] = difference
+        information['Size difference'][filetype] = dict_of_difference
+        difference = None
 
 # def checkAndMove(sourcefolder,endfolder):
 #     if os.path.exists(sourcefolder) and os.path.exists(endfolder):
@@ -93,33 +120,41 @@ def getPathName(directory=os.getcwd()):
     return listoffiles
 
 def getSize(path):
-    if not S_ISDIR(os.stat(path).st_mode):
+    size = 0
+    if not S_ISDIR(os.lstat(path).st_mode):
         return os.stat(path).st_size
     else:
-        size = 0
         for i,ele in enumerate(os.walk(path)):
-            if i == 0:
+            if ele[2] is None:
                 continue
             for j in ele[2]:
                 file = ele[0] + '/' + j
                 size += os.stat(file).st_size
         return size
 
-def showFileSize(file): # Convert size to human readable
-    fsize = getSize(file)
-    if fsize > (1024 * 1024 * 1024):
+def showSize(file): # Convert size to human readable
+    if isinstance(file,str):
+        fsize = getSize(file)
+    elif isinstance(file,int):
+        fsize = file
+    if abs(fsize) > (1024 * 1024 * 1024):
         return f'{fsize/(1024**3):.4f} Gb'
-    elif fsize > (1024 * 1024):
+    elif abs(fsize) > (1024 * 1024):
         return f'{fsize/(1024**2):.4f} Mb'
-    elif fsize > (1024):
+    elif abs(fsize) > (1024):
         return f'{fsize/(1024):.4f} Kb'
     else:
         return f'{fsize:.4f} b'
 
-def change_in_size(srcfile,endfile):
-    change = getFileSize(srcfile) - getFileSize(endfile)
-    percentage = f'{getFileSize(endfile)/getFileSize(srcfile) * 100} %'
-    return (change,percentage)
+def changeInSize(srcfile,endfile):
+    change = getSize(srcfile) - getSize(endfile)
+    if change > 0:
+        percentage = f'-{getSize(endfile)/getSize(srcfile) * 100:.2f} %'
+    elif change < 0:
+        percentage = f'+{getSize(endfile)/getSize(srcfile) * 100:.2f} %'
+    else:
+        percentage = 'No difference'
+    return (showSize(change),percentage)
 
 def makeTables():
     table = pt.PrettyTable()
@@ -127,9 +162,11 @@ def makeTables():
     #TODO make pretty table for every compressor
 
 def main():
-    # archivization(dict_of_commands)
-    print(showFileSize('Dane_do'))
-    print(showFileSize('Dane_do/pdf/byte-of-python.pdf'))
+    archivization(dict_of_commands)
+    pprint(information)
+    # print(showSize('Dane_do'))
+    # print(changeInSize('Dane_do/','Dane_po/'))
+    # print(showSize('Dane_do/pdf/byte-of-python.pdf'))
     # change_in_size()
     # print(getPathName('Dane_do/pdf'))
     #TODO make proper main()
