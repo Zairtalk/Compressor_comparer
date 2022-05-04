@@ -5,7 +5,6 @@ import prettytable as pt
 import time
 import shutil as sh
 from stat import S_ISDIR
-from pprint import pprint
 import json
 
 with open('info_dict.json','r') as f:
@@ -87,18 +86,6 @@ def saveData(compr,filetype,size=None,time=None,difference=None):
         information['Size difference'][filetype][compr] = difference
         difference = None
 
-# def checkAndMove(sourcefolder,endfolder):
-#     if os.path.exists(sourcefolder) and os.path.exists(endfolder):
-#         listoffiles = getPathName(sourcefolder)
-#         for i in listoffiles:
-#             if i[1] in list_of_extensions:
-#                 try:
-#                     sh.move(i[0] + i[1], endfolder)
-#                 except OSError:
-#                     raise
-#     else:
-#         print(os.path.exists(sourcefolder),os.path.exists(endfolder))
-
 def getPathName(directory=os.getcwd()):
     try:
         curpath = os.getcwd()
@@ -158,14 +145,6 @@ def makeTables():
             table_size.add_column('Compressor',list(x for x in information['Output size']['doc'].keys()),align='l')
             for j in information[i]:
                 table_size.add_column(j,list(x for x in information['Output size'][j].values()),align='l')
-            # for key,value in information[i].items():
-            #     for compres,info in value.items():
-            #         if not rlist:
-            #             rlist.append(compres)
-            #         rlist.append(info)
-            #     else:
-            #         table_size.add_row(rlist)
-            #         rlist = []
         elif i == 'Size difference':
             table_diff.add_column('Compressor',list(x for x in information['Size difference']['doc'].keys()),align='l')
             for j in information[i]:
@@ -183,19 +162,10 @@ def makeTables():
     print('Difference in size'.center(50,'-'))
     print(table_diff)
 
-    #table.field_names()
-    #TODO make pretty table for every compressor
-
 def main():
     archivization(dict_of_commands)
     pprint(information)
     makeTables()
-    # print(showSize('Dane_do'))
-    # print(changeInSize('Dane_do/','Dane_po/'))
-    # print(showSize('Dane_do/pdf/byte-of-python.pdf'))
-    # change_in_size()
-    # print(getPathName('Dane_do/pdf'))
-    #TODO make proper main()
 
 if __name__ == '__main__':
     main()
