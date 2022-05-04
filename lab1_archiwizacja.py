@@ -42,7 +42,7 @@ def to_archive(command): #function that redirects commands to linux shell
     os.system(command)
 
 
-def archivization(dicto,folds=('pdf','doc')): #main component of program, where everything is distributed
+def archivization(dicto,folds=folders): #main component of program, where everything is distributed
     created = False
     curdir = os.getcwd()
     for folder in folds:
@@ -141,10 +141,10 @@ def showSize(file): # Convert size to human readable
 
 def changeInSize(srcfile,endfile):
     change = getSize(srcfile) - getSize(endfile)
-    if change > 0:
-        percentage = f'-{getSize(endfile)/getSize(srcfile) * 100:.2f} %'
-    elif change < 0:
-        percentage = f'+{getSize(endfile)/getSize(srcfile) * 100:.2f} %'
+    if change > 100:
+        percentage = f'+{(getSize(endfile)/getSize(srcfile) * 100) - 100:.2f} %'
+    elif change < 100:
+        percentage = f'-{100 - (getSize(endfile)/getSize(srcfile) * 100):.2f} %'
     else:
         percentage = 'No difference'
     return (showSize(change),percentage)
