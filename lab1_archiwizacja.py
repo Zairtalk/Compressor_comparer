@@ -129,9 +129,9 @@ def showSize(file): # Convert size to human readable
 def changeInSize(srcfile,endfile):
     change = getSize(srcfile) - getSize(endfile)
     if change > 100:
-        percentage = f'+{(getSize(endfile)/getSize(srcfile) * 100) - 100:.2f} %'
+        percentage = f'{(getSize(endfile)/getSize(srcfile) * 100) - 100:.2f} %'
     elif change < 100:
-        percentage = f'-{100 - (getSize(endfile)/getSize(srcfile) * 100):.2f} %'
+        percentage = f'+{100 - (getSize(endfile)/getSize(srcfile) * 100):.2f} %'
     else:
         percentage = 'No difference'
     return (showSize(change),percentage)
