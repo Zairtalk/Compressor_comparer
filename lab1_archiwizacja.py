@@ -6,12 +6,10 @@ import time
 import shutil as sh
 from stat import S_ISDIR
 from pprint import pprint
+import json
 
-
-information = {'Time spent':{},'Output size':{},'Size difference':{}}
-dict_of_difference = {}
-dict_of_sizes = {}
-dict_of_time = {}
+with open('info_dict.json','r') as f:
+    information = json.load(f)
 
 folders = os.listdir('Dane_do')
 
@@ -26,18 +24,16 @@ dict_of_commands = {'zip (.zip)':'zip -rq {0}.zip {1}',
                     'lzma (.lzma)':'lzma -kq {0}.tar',
                     'xz (.xz)':'xz -kq {0}.tar'}
 
-list_of_extensions = ['.zip','.rar','.7z','.lz4','.zst','.lrz','.gz','.bz2','.lzma','.xz']
-
 '''file compressors: zip, rar, 7zip, lz4, zstandart, pigz, bzip2, lzma, lrzip, xz'''
 
-timer = None
+timers = None
 def timer(func): #Decorator funciton to calculate time it takes to execute another function
     def wrap(*args, **kwargs):
-        global timer
+        global timers
         t1 = time.perf_counter()
         func(*args, **kwargs)
         t2 = time.perf_counter()
-        timer = t2 - t1
+        timers = t2 - t1
         # print(f'File was compressed in {timer:.4f} sec')
     return wrap
 
@@ -58,7 +54,7 @@ def archivization(dicto,folds=('pdf','doc')): #main component of program, where 
                 archive_command = command.format(endfile + folder,sourcefolder,folder)
                 to_archive(archive_command)
                 index = compressor.index('.')
-                saveData(compr=compressor[:index-2],filetype=folder,time=round(timer,4),\
+                saveData(compr=compressor[:index-2],filetype=folder,time=round(timers,4),\
                          size=showSize(endfile + folder + compressor[index:-1]),\
                         difference=changeInSize(sourcefolder,endfile + folder + compressor[index:-1]))
             else:
@@ -69,7 +65,7 @@ def archivization(dicto,folds=('pdf','doc')): #main component of program, where 
                 archive_command = command.format(folder)
                 to_archive(archive_command)
                 index = compressor.index('.')
-                saveData(compr=compressor[:index-2],filetype=folder,time=round(timer,4),\
+                saveData(compr=compressor[:index-2],filetype=folder,time=round(timers,4),\
                          size=showSize(folder + '.tar' + compressor[index:-1]),\
                         difference=changeInSize('../' + sourcefolder,folder + '.tar' + compressor[index:-1]))
         created = False
@@ -80,18 +76,15 @@ def archivization(dicto,folds=('pdf','doc')): #main component of program, where 
         os.chdir(curdir)
 
 def saveData(compr,filetype,size=None,time=None,difference=None):
-    global information,dict_of_difference,dict_of_sizes,dict_of_time
+    global information
     if time:
-        dict_of_time[compr] = time
-        information['Time spent'][filetype] = dict_of_time
+        information['Time spent'][filetype][compr] = time
         time = None
     if size:
-        dict_of_sizes[compr] = size
-        information['Output size'][filetype] = dict_of_sizes
+        information['Output size'][filetype][compr] = size
         size = None
     if difference:
-        dict_of_difference[compr] = difference
-        information['Size difference'][filetype] = dict_of_difference
+        information['Size difference'][filetype][compr] = difference
         difference = None
 
 # def checkAndMove(sourcefolder,endfolder):
@@ -157,13 +150,46 @@ def changeInSize(srcfile,endfile):
     return (showSize(change),percentage)
 
 def makeTables():
-    table = pt.PrettyTable()
+    table_size = pt.PrettyTable()
+    table_time = pt.PrettyTable()
+    table_diff = pt.PrettyTable()
+    for i in information.keys():
+        if i == 'Output size':
+            table_size.add_column('Compressor',list(x for x in information['Output size']['doc'].keys()),align='l')
+            for j in information[i]:
+                table_size.add_column(j,list(x for x in information['Output size'][j].values()),align='l')
+            # for key,value in information[i].items():
+            #     for compres,info in value.items():
+            #         if not rlist:
+            #             rlist.append(compres)
+            #         rlist.append(info)
+            #     else:
+            #         table_size.add_row(rlist)
+            #         rlist = []
+        elif i == 'Size difference':
+            table_diff.add_column('Compressor',list(x for x in information['Size difference']['doc'].keys()),align='l')
+            for j in information[i]:
+                table_diff.add_column(j,list(str(x[0]) + ' / ' + str(x[1]) for x in information['Size difference'][j].values()),align='l')
+        elif i == 'Time spent':
+            table_time.add_column('Compressor',list(x for x in information['Time spent']['doc'].keys()),align='l')
+            for j in information[i]:
+                table_time.add_column(j,list(str(x) + ' sec' for x in information['Time spent'][j].values()),align='l')
+        else:
+            raise ValueError
+    print('Size after comprssion'.center(50,'-'))
+    print(table_size)
+    print('Time of compression'.center(50,'-'))
+    print(table_time)
+    print('Difference in size'.center(50,'-'))
+    print(table_diff)
+
     #table.field_names()
     #TODO make pretty table for every compressor
 
 def main():
     archivization(dict_of_commands)
     pprint(information)
+    makeTables()
     # print(showSize('Dane_do'))
     # print(changeInSize('Dane_do/','Dane_po/'))
     # print(showSize('Dane_do/pdf/byte-of-python.pdf'))
