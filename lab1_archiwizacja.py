@@ -25,14 +25,12 @@ dict_of_commands = {'zip (.zip)':'zip -rq {0}.zip {1}',
 
 '''file compressors: zip, rar, 7zip, lz4, zstandart, pigz, bzip2, lzma, lrzip, xz'''
 
-timers = None
 def timer(func): #Decorator funciton to calculate time it takes to execute another function
     def wrap(*args, **kwargs):
-        global timers
         t1 = time.perf_counter()
         func(*args, **kwargs)
         t2 = time.perf_counter()
-        timers = t2 - t1
+        return t2 - t1
         # print(f'File was compressed in {timer:.4f} sec')
     return wrap
 
@@ -58,7 +56,7 @@ def archivization(dicto,folds=folders): #main component of program, where everyt
             if compressor not in ('lz4 (.lz4)','pixz (.pixz)','zstandart (.zst)','lrzip zpaq (.lrz)',\
                                   'pigz (.gz)','bzip2 (.bz2)','lzma (.lzma)','xz (.xz)'):
                 archive_command = command.format(endfile + folder,sourcefolder,folder)
-                to_archive(archive_command)
+                timers = to_archive(archive_command)
                 index = compressor.index('.')
                 saveData(compr=compressor[:index-2],filetype=folder,time=round(timers,4),\
                          size=showSize(endfile + folder + compressor[index:-1]),\
@@ -69,7 +67,7 @@ def archivization(dicto,folds=folders): #main component of program, where everyt
                     os.system('tar -cf {1}.tar {0}/'.format(sourcefolder,endfile + folder))
                     os.chdir(endfile)
                 archive_command = command.format(folder)
-                to_archive(archive_command)
+                timers = to_archive(archive_command)
                 index = compressor.index('.')
                 saveData(compr=compressor[:index-2],filetype=folder,time=round(timers,4),\
                          size=showSize(folder + '.tar' + compressor[index:-1]),\
@@ -164,7 +162,7 @@ def makeTables():
                 table_time.add_column(j,list(str(x) + ' sec' for x in information['Time spent'][j].values()),align='l')
         else:
             raise ValueError
-    print('Size after comprssion'.center(50,'-'))
+    print('Size after compression'.center(50,'-'))
     print(table_size)
     print('Time of compression'.center(50,'-'))
     print(table_time)
